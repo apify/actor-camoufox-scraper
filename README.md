@@ -36,7 +36,7 @@ from crawlee.crawlers import PlaywrightCrawlingContext
 
 async def page_function(context: PlaywrightCrawlingContext) -> Any:
     url = context.request["url"]
-    await context.page.locator("title").first.inner_text()
+    title = await context.page.locator("title").first.inner_text()
     return {"url": url, "title": title}
 ```
 

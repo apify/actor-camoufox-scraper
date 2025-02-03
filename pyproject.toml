@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "actor-beautifulsoup-scraper"
+name = "actor-camoufox-scraper"
 version = "0.0.1"
 description = ""
 authors = ["Josef Prochazka <josef.prochazka@apify.com>"]
