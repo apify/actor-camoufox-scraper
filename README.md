@@ -32,7 +32,7 @@ Example:
 
 ```python
 from typing import Any
-from crawlee.beautifulsoup_crawler import BeautifulSoupCrawlingContext
+from crawlee.crawlers import PlaywrightCrawlingContext
 
 async def page_function(context: PlaywrightCrawlingContext) -> Any:
     url = context.request["url"]
