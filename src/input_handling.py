@@ -23,8 +23,9 @@ class ActorInputData(BaseModel):
     start_urls: Sequence[str]
     link_selector: str = ''
     link_patterns: list[Pattern | Glob] = []
+    max_requests_per_crawl: int = Field(1, ge=1)
     max_depth: int = Field(0, ge=0)
-    request_timeout: timedelta = Field(timedelta(seconds=10), gt=timedelta(seconds=0))
+    request_timeout: timedelta = Field(timedelta(seconds=30), gt=timedelta(seconds=0))
     proxy_configuration: ProxyConfiguration
     user_function: Callable
 
