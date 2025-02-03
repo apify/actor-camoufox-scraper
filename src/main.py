@@ -32,7 +32,7 @@ async def main() -> None:
         aid = await ActorInputData.from_input()
 
         crawler = PlaywrightCrawler(
-            max_requests_per_crawl=air.max_requests_per_crawl,
+            max_requests_per_crawl=aid.max_requests_per_crawl,
             max_crawl_depth=aid.max_depth,
             proxy_configuration=aid.proxy_configuration,
             request_handler_timeout=aid.request_timeout,
