@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "actor-beautifulsoup-scraper"
+version = "0.0.1"
+description = ""
+authors = ["Josef Prochazka <josef.prochazka@apify.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+camoufox = {version= ">=0.4.5", extras = ["geoip"]}
+apify = "*"
+crawlee = {version = "*", extras = ["playwright"]}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

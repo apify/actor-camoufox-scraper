@@ -1,0 +1,63 @@
+{
+  "title": "Camoufox Scraper",
+  "type": "object",
+  "description": "Camoufox Scraper loads <b>Start URLs</b> using Camoufox browser through Playwright and then executes <b>Page function</b> for each page to extract data from it. To follow links and scrape additional pages, set <b>Link selector</b> with <b>Link patterns</b> to specify which links to follow. Alternatively, you can manually enqueue new links in the <b>Page function</b>. For details, see the actor's <a href='https://apify.com/apify/store-camoufox-scraper' target='_blank' rel='noopener'>README</a>.",
+  "schemaVersion": 1,
+  "properties": {
+    "startUrls": {
+      "sectionCaption": "Basic configuration",
+      "title": "Start URLs",
+      "type": "array",
+      "description": "A static list of URLs to scrape.",
+      "editor": "requestListSources",
+      "prefill": [{ "url": "https://crawlee.dev" }]
+    },
+    "maxCrawlingDepth": {
+      "title": "Max crawling depth",
+      "type": "integer",
+      "description": "Specifies how many links away from the <b>Start URLs</b> the scraper will descend. Note that pages added using <code>context.request_queue</code> in <b>Page function</b> are not subject to the maximum depth constraint.",
+      "minimum": 0,
+      "prefill": 1,
+      "default": 1
+    },
+    "requestTimeout": {
+      "title": "Request timeout",
+      "type": "integer",
+      "description": "The maximum duration (in seconds) for the request to complete before timing out. The timeout value is passed to the <code>httpx.AsyncClient</code> object.",
+      "minimum": 0,
+      "prefill": 10,
+      "default": 10
+    },
+    "linkSelector": {
+      "title": "Link selector",
+      "type": "string",
+      "description": "A CSS selector stating which links on the page (<code>&lt;a&gt;</code> elements with <code>href</code> attribute) shall be followed and added to the request queue. To filter the links added to the queue, use the <b>Link patterns</b> field.<br><br>If the <b>Link selector</b> is empty, the page links are ignored. Of course, you can work with the page links and the request queue in the <b>Page function</b> as well.",
+      "editor": "textfield",
+      "prefill": "a[href]"
+    },
+    "linkPatterns": {
+      "title": "Link patterns",
+      "type": "array",
+      "description": "Link patterns (regular expressions) to match links in the page that you want to enqueue. Combine with <b>Link selector</b> to tell the scraper where to find links. Omitting the link patterns will cause the scraper to enqueue all links matched by the Link selector.",
+      "editor": "stringList",
+      "prefill": [".*crawlee\\.dev.*"]
+    },
+    "pageFunction": {
+      "title": "Page function",
+      "type": "string",
+      "description": "A Python function, that is executed for every page. Use it to scrape data from the page, perform actions or add new URLs to the request queue. The page function has its own naming scope and you can import any installed modules. Typically you would want to obtain the data from the <code>context.soup</code> object and return them. Identifier <code>page_function</code> can't be changed. For more information about the <code>context</code> object you get into the <code>page_function</code> check the <a href='https://github.com/apify/actor-beautifulsoup-scraper#context' target='_blank' rel='noopener'>github.com/apify/actor-beautifulsoup-scraper#context</a>. Asynchronous functions are supported.",
+      "editor": "python",
+      "prefill": "from typing import Any\nfrom crawlee.beautifulsoup_crawler import BeautifulSoupCrawlingContext\n\n# See the context section in readme to find out what fields you can access \n# https://apify.com/apify/beautifulsoup-scraper#context    \ndef page_function(context: BeautifulSoupCrawlingContext) -> Any:\n    url = context.request.url\n    title = context.soup.title.string if context.soup.title else None\n    return {'url': url, 'title': title}\n"
+    },
+    "proxyConfiguration": {
+      "sectionCaption": "Proxy and HTTP configuration",
+      "title": "Proxy configuration",
+      "type": "object",
+      "description": "Specifies proxy servers that will be used by the scraper in order to hide its origin.",
+      "editor": "proxy",
+      "prefill": { "useApifyProxy": true },
+      "default": { "useApifyProxy": true }
+    }
+  },
+  "required": ["startUrls", "pageFunction", "proxyConfiguration"]
+}
