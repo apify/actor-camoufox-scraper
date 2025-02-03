@@ -39,4 +39,4 @@ RUN python -m compileall -q .
 RUN python -m camoufox fetch
 
 # Specify how to launch the source code of your Actor.
-CMD ["python", "-m", "template_test"]
+CMD ["python", "-m", "src"]
