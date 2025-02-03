@@ -53,7 +53,8 @@ class ActorInputData(BaseModel):
                     re.compile(pattern) for pattern in actor_input.get('linkPatterns', ['.*'])
                 ],  # default matches everything
                 max_depth=actor_input.get('maxCrawlingDepth', 1),
-                request_timeout=timedelta(seconds=actor_input.get('requestTimeout', 10)),
+                max_requests_per_crawl=actor_input.get('maxRequestsPerCrawl', 5),
+                request_timeout=timedelta(seconds=actor_input.get('requestTimeout', 30)),
                 proxy_configuration=proxy_configuration,
                 user_function=await extract_user_function(page_function),
             )

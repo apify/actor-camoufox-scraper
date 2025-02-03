@@ -32,7 +32,7 @@ async def main() -> None:
         aid = await ActorInputData.from_input()
 
         crawler = PlaywrightCrawler(
-            # Limit the crawl to max requests. Remove or increase it for crawling all links.
+            max_requests_per_crawl=air.max_requests_per_crawl,
             max_crawl_depth=aid.max_depth,
             proxy_configuration=aid.proxy_configuration,
             request_handler_timeout=aid.request_timeout,
