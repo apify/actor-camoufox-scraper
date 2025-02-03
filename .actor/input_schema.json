@@ -47,7 +47,7 @@
       "type": "string",
       "description": "A Python function, that is executed for every page. Use it to scrape data from the page, perform actions or add new URLs to the request queue. The page function has its own naming scope and you can import any installed modules. Typically you would want to obtain the data from the <code>context.soup</code> object and return them. Identifier <code>page_function</code> can't be changed. For more information about the <code>context</code> object you get into the <code>page_function</code> check the <a href='https://github.com/apify/actor-beautifulsoup-scraper#context' target='_blank' rel='noopener'>github.com/apify/actor-beautifulsoup-scraper#context</a>. Asynchronous functions are supported.",
       "editor": "python",
-      "prefill": "from typing import Any\nfrom crawlee.crawlers import PlaywrightCrawlingContext\n\n# See the context section in readme to find out what fields you can access \ndef page_function(context: PlaywrightCrawlingContext) -> Any:\n    url = context.request.url\n    title = await context.page.locator(\"title\").first.inner_text()\n    return {'url': url, 'title': title}\n"
+      "prefill": "from typing import Any\nfrom crawlee.crawlers import PlaywrightCrawlingContext\n \nasync def page_function(context: PlaywrightCrawlingContext) -> Any:\n    url = context.request.url\n    title = await context.page.locator(\"title\").first.inner_text()\n    return {'url': url, 'title': title}\n"
     },
     "proxyConfiguration": {
       "sectionCaption": "Proxy and HTTP configuration",
