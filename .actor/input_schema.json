@@ -1,7 +1,7 @@
 {
   "title": "Camoufox Scraper",
   "type": "object",
-  "description": "Camoufox Scraper loads <b>Start URLs</b> using Camoufox browser through Playwright and then executes <b>Page function</b> for each page to extract data from it. To follow links and scrape additional pages, set <b>Link selector</b> with <b>Link patterns</b> to specify which links to follow. Alternatively, you can manually enqueue new links in the <b>Page function</b>. For details, see the actor's <a href='https://apify.com/apify/store-camoufox-scraper' target='_blank' rel='noopener'>README</a>.",
+  "description": "Camoufox Scraper loads <b>Start URLs</b> using Camoufox browser through Playwright and then executes <b>Page function</b> for each page to extract data from it. To follow links and scrape additional pages, set <b>Link selector</b> with <b>Link patterns</b> to specify which links to follow. Alternatively, you can manually enqueue new links in the <b>Page function</b>. For details, see the actor's <a href='https://github.com/apify/actor-camoufox-scraper/blob/main/README.md' target='_blank' rel='noopener'>README</a>.",
   "schemaVersion": 1,
   "properties": {
     "startUrls": {
