@@ -19,6 +19,7 @@ async def main() -> None:
 
         # Start one crawler for each release
         for release in releases:
+            version_text =  release[0].full_string
             fetcher.set_specific_version(*release)
             fetcher.install()
             crawler = PlaywrightCrawler(
@@ -35,11 +36,12 @@ async def main() -> None:
             @crawler.router.default_handler
             async def request_handler(context: PlaywrightCrawlingContext) -> None:
                 # Process the request.
-                context.log.info(f'Processing {context.request.url} ...')
-                for i in range(15):
-                    image = await context.page.screenshot(full_page = True )
-                    kvs= await context.get_key_value_store()
-                    await kvs.set_value(f"{context.request.url}",image, content_type='image/png')
-                    await asyncio.sleep(aid.sleep_time_before_screenshot)
+                context.log.info(f'Waiting for: {context.request.url} ...')
+                await asyncio.sleep(aid.sleep_time_before_screenshot)
+                context.log.info(f'Screenshot of: {context.request.url} ...')
+                image = await context.page.screenshot(full_page=True)
+                kvs= await context.get_key_value_store()
+                await kvs.set_value(f"{context.request.url}_{version_text}",image, content_type='image/png')
+
 
             await crawler.run(aid.start_urls)
