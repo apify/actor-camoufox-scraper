@@ -72,7 +72,9 @@ class ActorInputData(BaseModel):
 
 
 def extract_plugin_class(camoufox_plugin) -> PlaywrightBrowserPlugin:
-    scope: dict = {}
+    scope: dict = {"PlaywrightBrowserPlugin":PlaywrightBrowserPlugin,
+                   "PlaywrightBrowserController":PlaywrightBrowserController,
+                   "AsyncNewBrowser":AsyncNewBrowser}
     exec(camoufox_plugin, scope)
 
     plugin = scope["CamoufoxPlugin"]

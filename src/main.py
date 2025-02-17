@@ -1,9 +1,11 @@
 import asyncio
 
 from apify import Actor
+from slugify import slugify
 
 from crawlee.browsers import BrowserPool
 from crawlee.crawlers import PlaywrightCrawler, PlaywrightCrawlingContext
+from crawlee.storages import RequestQueue
 
 from src.camoufox_fetcher import VersionSpecificCamoufoxFetcher
 from src.input_handling import ActorInputData
@@ -19,10 +21,12 @@ async def main() -> None:
 
         # Start one crawler for each release
         for release in releases:
-            version_text =  release[0].full_string
+            version_text = release[0].full_string
+            rq=await RequestQueue.open(name=slugify(version_text))
             fetcher.set_specific_version(*release)
             fetcher.install()
             crawler = PlaywrightCrawler(
+                request_manager=rq,
                 max_requests_per_crawl=aid.max_requests_per_crawl,
                 max_crawl_depth=aid.max_depth,
                 proxy_configuration=aid.proxy_configuration,
@@ -41,7 +45,9 @@ async def main() -> None:
                 context.log.info(f'Screenshot of: {context.request.url} ...')
                 image = await context.page.screenshot(full_page=True)
                 kvs= await context.get_key_value_store()
-                await kvs.set_value(f"{context.request.url}_{version_text}",image, content_type='image/png')
+                await kvs.set_value(slugify(f"{context.request.url}_{version_text}"),image, content_type='image/png')
 
 
             await crawler.run(aid.start_urls)
+
+            await rq.drop()
