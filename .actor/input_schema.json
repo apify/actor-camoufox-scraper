@@ -75,5 +75,5 @@
       "default": { "useApifyProxy": true }
     }
   },
-  "required": ["startUrls", "pageFunction", "proxyConfiguration"]
+  "required": ["startUrls", "camoufoxPlugin", "proxyConfiguration"]
 }
