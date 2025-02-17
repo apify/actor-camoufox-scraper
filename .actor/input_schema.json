@@ -63,7 +63,7 @@
       "type": "string",
       "description": "A Python code defining Camoufox plugin and all it's options.",
       "editor": "python",
-      "prefill": "from camoufox import AsyncNewBrowser\nfrom typing_extensions import override\nfrom crawlee.browsers import PlaywrightBrowserPlugin, PlaywrightBrowserController\n\nclass CamoufoxPlugin(PlaywrightBrowserPlugin):\n    @override\n    async def new_browser(self) -> PlaywrightBrowserController:\n        return PlaywrightBrowserController(browser=await AsyncNewBrowser(self._playwright, headless=True),max_open_pages_per_browser=1,header_generator=None)\n"
+      "prefill": "class CamoufoxPlugin(PlaywrightBrowserPlugin):\n    @override\n    async def new_browser(self) -> PlaywrightBrowserController:\n        return PlaywrightBrowserController(browser=await AsyncNewBrowser(self._playwright, headless=True),max_open_pages_per_browser=1,header_generator=None)\n"
     },
     "proxyConfiguration": {
       "sectionCaption": "Proxy and HTTP configuration",

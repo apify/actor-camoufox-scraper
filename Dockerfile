@@ -35,8 +35,5 @@ COPY . ./
 # Use compileall to ensure the runnability of the Actor Python code.
 RUN python -m compileall -q .
 
-# Fetch camoufox files that are always needed when using camoufox.
-RUN python -m camoufox fetch
-
 # Specify how to launch the source code of your Actor.
 CMD ["python", "-m", "src"]

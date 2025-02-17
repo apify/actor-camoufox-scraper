@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import re
 from datetime import timedelta
-from inspect import iscoroutinefunction
 from re import Pattern
-from typing import Callable, Sequence, cast
+from typing import Sequence, cast
 
 from crawlee import Glob
-from crawlee.browsers import PlaywrightBrowserPlugin
-from crawlee.crawlers import PlaywrightCrawlingContext
+from camoufox import AsyncNewBrowser
+from crawlee.browsers import PlaywrightBrowserPlugin, PlaywrightBrowserController
 from pydantic import BaseModel, ConfigDict, Field
 from apify import Actor, ProxyConfiguration
 
@@ -73,4 +72,8 @@ class ActorInputData(BaseModel):
 
 
 def extract_plugin_class(camoufox_plugin) -> PlaywrightBrowserPlugin:
-    return exec(camoufox_plugin)
+    scope: dict = {}
+    exec(camoufox_plugin, scope)
+
+    plugin = scope["CamoufoxPlugin"]
+    return cast(PlaywrightBrowserPlugin, plugin)
