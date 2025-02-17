@@ -7,6 +7,7 @@ from re import Pattern
 from typing import Callable, Sequence, cast
 
 from crawlee import Glob
+from crawlee.browsers import PlaywrightBrowserPlugin
 from crawlee.crawlers import PlaywrightCrawlingContext
 from pydantic import BaseModel, ConfigDict, Field
 from apify import Actor, ProxyConfiguration
@@ -20,14 +21,16 @@ class ActorInputData(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    camoufox_plugin_class: type[PlaywrightBrowserPlugin]
     start_urls: Sequence[str]
     link_selector: str = ''
     link_patterns: list[Pattern | Glob] = []
     max_requests_per_crawl: int = Field(1, ge=1)
     max_depth: int = Field(0, ge=0)
+    sleep_time_before_screenshot: int = Field(0, ge=0)
     request_timeout: timedelta = Field(timedelta(seconds=30), gt=timedelta(seconds=0))
     proxy_configuration: ProxyConfiguration
-    user_function: Callable
+
 
     @classmethod
     async def from_input(cls) -> ActorInputData:
@@ -38,7 +41,7 @@ class ActorInputData(BaseModel):
             Actor.log.error('No start URLs specified in actor input, exiting...')
             await Actor.exit(exit_code=1)
 
-        if not (page_function := actor_input.get('pageFunction', '')):
+        if not (camoufox_plugin := actor_input.get('camoufoxPlugin', '')):
             Actor.log.error('No page function specified in actor input, exiting...')
             await Actor.exit(exit_code=1)
 
@@ -54,10 +57,11 @@ class ActorInputData(BaseModel):
                     re.compile(pattern) for pattern in actor_input.get('linkPatterns', ['.*'])
                 ],  # default matches everything
                 max_depth=actor_input.get('maxCrawlingDepth', 1),
+                sleep_time_before_screenshot=actor_input.get('sleep_time_before_screenshot', 10),
                 max_requests_per_crawl=actor_input.get('maxRequestsPerCrawl', 5),
                 request_timeout=timedelta(seconds=actor_input.get('requestTimeout', 30)),
                 proxy_configuration=proxy_configuration,
-                user_function=await extract_user_function(page_function),
+                camoufox_plugin_class=extract_plugin_class(camoufox_plugin),
             )
         else:
             Actor.log.error('Creation of proxy configuration failed, exiting...')
@@ -68,49 +72,5 @@ class ActorInputData(BaseModel):
         return aid
 
 
-async def extract_user_function(page_function: str) -> Callable:
-    """Extract the user-defined function using exec and returns it as a Callable.
-
-    This function uses `exec` internally to execute the `user_function` code in a separate scope. The `user_function`
-    should be a valid Python code snippet defining a function named `USER_DEFINED_FUNCTION_NAME`.
-
-    Args:
-        page_function: The string representation of the user-defined function.
-
-    Returns:
-        The extracted user-defined function.
-
-    Raises:
-        KeyError: If the function name `USER_DEFINED_FUNCTION_NAME` cannot be found.
-    """
-    scope: dict = {}
-    exec(page_function, scope)
-
-    try:
-        user_defined_function = scope[USER_DEFINED_FUNCTION_NAME]
-    except KeyError:
-        Actor.log.error(f'Function name "{USER_DEFINED_FUNCTION_NAME}" could not be found, exiting...')
-        await Actor.exit(exit_code=1)
-
-    return cast(Callable, user_defined_function)
-
-
-async def execute_user_function(context: PlaywrightCrawlingContext, user_defined_function: Callable) -> None:
-    """Execute the user-defined function with the provided context and pushes data to the Actor.
-
-    This function checks if the provided user-defined function is a coroutine. If it is, the function is awaited.
-    If it is not, it is executed directly.
-
-    Args:
-        context: The context object to be passed as an argument to the function.
-        user_defined_function: The user-defined function to be executed.
-
-    Returns:
-        None
-    """
-    if iscoroutinefunction(user_defined_function):
-        result = await user_defined_function(context)
-    else:
-        result = user_defined_function(context)
-
-    await Actor.push_data(result)
+def extract_plugin_class(camoufox_plugin) -> PlaywrightBrowserPlugin:
+    return exec(camoufox_plugin)
