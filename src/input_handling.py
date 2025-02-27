@@ -46,7 +46,7 @@ class ActorInputData(BaseModel):
             proxy_configuration := await Actor.create_proxy_configuration(
                 actor_proxy_input=actor_input.get("proxyConfiguration")
             )
-        ) is None:
+        ) is not None:
             aid = cls(
                 start_urls=[start_url["url"] for start_url in start_urls],
                 link_selector=actor_input.get("linkSelector", ""),

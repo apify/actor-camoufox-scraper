@@ -30,7 +30,7 @@ async def main() -> None:
 
         fetcher = VersionSpecificCamoufoxFetcher()
         releases = fetcher.fetch_latest_releases(3)
-        attempts_per_release = 1
+        attempts_per_release = 5
 
         dataset = await Actor.open_dataset(name="CamoufoxTester")
 
@@ -53,6 +53,7 @@ async def main() -> None:
                         max_requests_per_crawl=aid.max_requests_per_crawl,
                         max_crawl_depth=aid.max_depth,
                         max_request_retries=1,
+                        proxy_configuration=aid.proxy_configuration,
                         request_handler_timeout=aid.request_timeout,
                         browser_pool=BrowserPool(plugins=[camoufox_plugin]),
                     )
@@ -96,19 +97,20 @@ async def main() -> None:
 
                     await crawler.run(aid.start_urls)
 
-                    for page, blocked_info in blocked_summary.items():
-                        await dataset.push_data(
-                            {
-                                "date:": datetime.now().date().isoformat(),
-                                "Camoufox binary": version_text,
-                                "page:": page,
-                                "is_blocked_without_click [%]": blocked_info.is_blocked_without_click_count
-                                / attempts_per_release,
-                                "is_blocked_after_click [%]": blocked_info.is_blocked_after_click
-                                / attempts_per_release,
-                                "can_get_through [%]": blocked_info.can_get_through
-                                / attempts_per_release,
-                            }
-                        )
                 finally:
                     await rq.drop()
+
+                for page, blocked_info in blocked_summary.items():
+                    await dataset.push_data(
+                        {
+                            "date:": datetime.now().date().isoformat(),
+                            "Camoufox binary": version_text,
+                            "page:": page,
+                            "is_blocked_without_click [%]": blocked_info.is_blocked_without_click_count
+                            / attempts_per_release,
+                            "is_blocked_after_click [%]": blocked_info.is_blocked_after_click
+                            / attempts_per_release,
+                            "can_get_through [%]": blocked_info.can_get_through
+                            / attempts_per_release,
+                        }
+                    )
