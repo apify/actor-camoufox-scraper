@@ -28,6 +28,7 @@ class ActorInputData(BaseModel):
     max_depth: int = Field(0, ge=0)
     sleep_time_before_screenshot: int = Field(0, ge=0)
     request_timeout: timedelta = Field(timedelta(seconds=30), gt=timedelta(seconds=0))
+    proxy_configuration: ProxyConfiguration
 
     @classmethod
     async def from_input(cls) -> ActorInputData:

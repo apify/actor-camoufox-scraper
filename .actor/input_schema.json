@@ -10,7 +10,7 @@
       "type": "array",
       "description": "A static list of URLs to scrape.",
       "editor": "requestListSources",
-      "prefill": [{ "url": "https://crawlee.dev" }]
+      "prefill": [{ "url": ["https://grabjobs.co/", "https://gateway.albop.com/"] }]
     },
     "maxCrawlingDepth": {
       "title": "Max crawling depth",
