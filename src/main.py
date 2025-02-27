@@ -17,8 +17,8 @@ from src.input_handling import ActorInputData
 
 @dataclasses.dataclass
 class BlockedInfo:
-    is_blocked_without_click_count: int = 0
-    is_blocked_after_click: int = 0
+    blocked_without_click_count: int = 0
+    blocked_after_click_count: int = 0
     can_get_through: int = 0
 
 
@@ -41,10 +41,10 @@ async def main() -> None:
             fetcher.install()
             maybe_download_addons(list(DefaultAddons))
 
+            blocked_summary = defaultdict(BlockedInfo)
+
             for attempt in range(1, attempts_per_release + 1):
                 version_text = release[0].full_string
-
-                blocked_summary = defaultdict(BlockedInfo)
 
                 rq = await RequestQueue.open(name=slugify(version_text))
                 try:
@@ -77,7 +77,7 @@ async def main() -> None:
                         ).first.all_inner_texts():
                             blocked_summary[
                                 context.request.url
-                            ].is_blocked_without_click_count += 1
+                            ].blocked_without_click_count += 1
 
                         await context.page.mouse.click(
                             bounding_dox["x"] + 30, bounding_dox["y"] + 30
@@ -90,7 +90,7 @@ async def main() -> None:
                         ).first.all_inner_texts():
                             blocked_summary[
                                 context.request.url
-                            ].is_blocked_after_click += 1
+                            ].blocked_after_click_count += 1
                             return
 
                         blocked_summary[context.request.url].can_get_through += 1
@@ -100,17 +100,17 @@ async def main() -> None:
                 finally:
                     await rq.drop()
 
-                for page, blocked_info in blocked_summary.items():
-                    await dataset.push_data(
-                        {
-                            "date:": datetime.now().date().isoformat(),
-                            "Camoufox binary": version_text,
-                            "page:": page,
-                            "is_blocked_without_click [%]": blocked_info.is_blocked_without_click_count
-                            / attempts_per_release,
-                            "is_blocked_after_click [%]": blocked_info.is_blocked_after_click
-                            / attempts_per_release,
-                            "can_get_through [%]": blocked_info.can_get_through
-                            / attempts_per_release,
-                        }
-                    )
+            for page, blocked_info in blocked_summary.items():
+                await dataset.push_data(
+                    {
+                        "date:": datetime.now().date().isoformat(),
+                        "Camoufox binary": version_text,
+                        "page:": page,
+                        "blocked_without_click_count [%]": blocked_info.blocked_without_click_count
+                        / attempts_per_release,
+                        "blocked_after_click_count [%]": blocked_info.blocked_after_click_count
+                        / attempts_per_release,
+                        "can_get_through [%]": blocked_info.can_get_through
+                        / attempts_per_release,
+                    }
+                )
