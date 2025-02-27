@@ -20,6 +20,7 @@ class BlockedInfo:
     blocked_without_click_count: int = 0
     blocked_after_click_count: int = 0
     can_get_through: int = 0
+    crashed: int = 0
 
 
 async def main() -> None:
@@ -65,35 +66,47 @@ async def main() -> None:
                         context: PlaywrightCrawlingContext,
                     ) -> None:
                         # Process the request.
-                        context.log.info(f"Waiting for: {context.request.url} ...")
-                        await asyncio.sleep(aid.sleep_time_before_screenshot)
-                        context.log.info(f"Screenshot of: {context.request.url} ...")
-                        bounding_dox = await context.page.locator(
-                            "css=.main-content div"
-                        ).first.bounding_box()
+                        try:
+                            context.log.info(f"Waiting for: {context.request.url} ...")
+                            await asyncio.sleep(aid.sleep_time_before_screenshot)
 
-                        if await context.page.get_by_text(
-                            "Cloudflare"
-                        ).first.all_inner_texts():
-                            blocked_summary[
-                                context.request.url
-                            ].blocked_without_click_count += 1
+                            if await context.page.get_by_text(
+                                "Cloudflare"
+                            ).first.all_inner_texts():
+                                blocked_summary[
+                                    context.request.url
+                                ].blocked_without_click_count += 1
 
-                        await context.page.mouse.click(
-                            bounding_dox["x"] + 30, bounding_dox["y"] + 30
-                        )
+                                context.log.info(
+                                    f"Blocked. Try to click on challenge: {context.request.url} ..."
+                                )
+                                bounding_dox = await context.page.locator(
+                                    "css=.main-content div"
+                                ).first.bounding_box()
+                                await context.page.mouse.click(
+                                    bounding_dox["x"] + 30, bounding_dox["y"] + 30
+                                )
 
-                        await asyncio.sleep(10)
+                                await asyncio.sleep(10)
 
-                        if await context.page.get_by_text(
-                            "Cloudflare"
-                        ).first.all_inner_texts():
-                            blocked_summary[
-                                context.request.url
-                            ].blocked_after_click_count += 1
-                            return
+                                if await context.page.get_by_text(
+                                    "Cloudflare"
+                                ).first.all_inner_texts():
+                                    blocked_summary[
+                                        context.request.url
+                                    ].blocked_after_click_count += 1
+                                    context.log.info(
+                                        f"Blocked after clicking on challenge: {context.request.url} ..."
+                                    )
+                                    return
 
-                        blocked_summary[context.request.url].can_get_through += 1
+                            context.log.info(
+                                f"Not blocked for: {context.request.url} ..."
+                            )
+                            blocked_summary[context.request.url].can_get_through += 1
+                        except Exception as e:
+                            blocked_summary[context.request.url].crashed += 1
+                            raise
 
                     await crawler.run(aid.start_urls)
 
@@ -106,11 +119,17 @@ async def main() -> None:
                         "date:": datetime.now().date().isoformat(),
                         "Camoufox binary": version_text,
                         "page:": page,
-                        "blocked_without_click_count [%]": blocked_info.blocked_without_click_count
+                        "blocked_without_click_count [%]": 100
+                        * blocked_info.blocked_without_click_count
                         / attempts_per_release,
-                        "blocked_after_click_count [%]": blocked_info.blocked_after_click_count
+                        "blocked_after_click_count [%]": 100
+                        * blocked_info.blocked_after_click_count
                         / attempts_per_release,
-                        "can_get_through [%]": blocked_info.can_get_through
+                        "can_get_through [%]": 100
+                        * blocked_info.can_get_through
+                        / attempts_per_release,
+                        "crashed [%]": 100
+                        * blocked_info.crashed
                         / attempts_per_release,
                     }
                 )
