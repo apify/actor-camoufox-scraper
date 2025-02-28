@@ -33,7 +33,7 @@ async def main() -> None:
         releases = fetcher.fetch_latest_releases(3)
         attempts_per_release = 5
 
-        dataset = await Actor.open_dataset(name="CamoufoxTester")
+        result_dataset = await Actor.open_dataset(name="CamoufoxTester")
 
         # Start one crawler for each release
         for release in releases:
@@ -70,42 +70,67 @@ async def main() -> None:
                     async def request_handler(
                         context: PlaywrightCrawlingContext,
                     ) -> None:
-                        # Process the request.
-                        context.log.info(f"Waiting for: {context.request.url} ...")
-                        await asyncio.sleep(aid.sleep_time_before_challenge)
-
-                        if await context.page.get_by_text(
-                            "Cloudflare"
-                        ).first.all_inner_texts():
-                            blocked_summary[
-                                context.request.url
-                            ].blocked_without_click_count += 1
-
-                            context.log.info(
-                                f"Blocked. Try to click on challenge: {context.request.url} ..."
-                            )
-                            bounding_dox = await context.page.locator(
-                                "css=.main-content div"
-                            ).first.bounding_box()
-                            await context.page.mouse.click(
-                                bounding_dox["x"] + 30, bounding_dox["y"] + 30
-                            )
-
-                            await asyncio.sleep(10)
+                        try:
+                            # Process the request.
+                            context.log.info(f"Waiting for: {context.request.url} ...")
+                            await asyncio.sleep(aid.sleep_time_before_challenge)
 
                             if await context.page.get_by_text(
                                 "Cloudflare"
                             ).first.all_inner_texts():
                                 blocked_summary[
                                     context.request.url
-                                ].blocked_after_click_count += 1
-                                context.log.info(
-                                    f"Blocked after clicking on challenge: {context.request.url} ..."
-                                )
-                                return
+                                ].blocked_without_click_count += 1
 
-                        context.log.info(f"Not blocked for: {context.request.url} ...")
-                        blocked_summary[context.request.url].can_get_through += 1
+                                context.log.info(
+                                    f"Blocked. Try to click on challenge: {context.request.url} ..."
+                                )
+                                bounding_dox = await context.page.locator(
+                                    "css=.main-content div"
+                                ).first.bounding_box()
+                                await context.page.mouse.click(
+                                    bounding_dox["x"] + 30, bounding_dox["y"] + 30
+                                )
+
+                                await asyncio.sleep(10)
+
+                                if await context.page.get_by_text(
+                                    "Cloudflare"
+                                ).first.all_inner_texts():
+                                    blocked_summary[
+                                        context.request.url
+                                    ].blocked_after_click_count += 1
+                                    context.log.info(
+                                        f"Blocked after clicking on challenge: {context.request.url} ..."
+                                    )
+                                    return
+
+                            context.log.info(
+                                f"Not blocked for: {context.request.url} ..."
+                            )
+                            blocked_summary[context.request.url].can_get_through += 1
+                        except Exception as e:
+                            context.log.info(
+                                f"Exception in handler. Try to get screenshot of the page"
+                            )
+                            data = {
+                                "page:": context.request.url,
+                                "binary": version_text,
+                                "attempt": attempt,
+                                "content": await context.page.content(),
+                            }
+                            # Errors go to unnamed default storages. No need to track them for long time.
+                            await context.push_data(data=data)
+                            image = await context.page.screenshot(full_page=True)
+                            kvs = await context.get_key_value_store()
+                            await kvs.set_value(
+                                slugify(
+                                    f"{context.request.url}_{version_text}_{attempt}"
+                                ),
+                                image,
+                                content_type="image/png",
+                            )
+                            raise
 
                     await crawler.run(aid.start_urls)
 
@@ -113,7 +138,7 @@ async def main() -> None:
                     await rq.drop()
 
             for page, blocked_info in blocked_summary.items():
-                await dataset.push_data(
+                await result_dataset.push_data(
                     {
                         "date:": datetime.now().date().isoformat(),
                         "Camoufox binary": version_text,
