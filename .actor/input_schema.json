@@ -12,29 +12,13 @@
       "editor": "requestListSources",
       "prefill": [{"url":"https://grabjobs.co/","method":"GET"},{"url":"https://gateway.albop.com/","method":"GET"}]
     },
-    "maxCrawlingDepth": {
-      "title": "Max crawling depth",
+    "sleepTimeBeforeChallenge": {
+      "title": "Sleep time before Cloudflare challenge [s]",
       "type": "integer",
-      "description": "Specifies how many links away from the <b>Start URLs</b> the scraper will descend. Note that pages added using <code>context.request_queue</code> in <b>Page function</b> are not subject to the maximum depth constraint.",
-      "minimum": 0,
-      "prefill": 1,
-      "default": 1
-    },
-    "sleepTimeBeforeScreenshot": {
-      "title": "Sleep time before screenshot [s]",
-      "type": "integer",
-      "description": "Specifies how long after navigation to the page screenshot is taken.",
+      "description": "Specifies how long after navigation to the page Cloudflare challenge is clicked.",
       "minimum": 0,
       "prefill": 15,
       "default": 15
-    },
-    "maxRequestsPerCrawl": {
-      "title": "Max requests per crawl",
-      "type": "integer",
-      "description": "Crawler will stop after processing this amount of requests.",
-      "minimum": 1,
-      "prefill": 1,
-      "default": 1
     },
     "requestTimeout": {
       "title": "Request timeout",
@@ -43,20 +27,6 @@
       "minimum": 0,
       "prefill": 30,
       "default": 30
-    },
-    "linkSelector": {
-      "title": "Link selector",
-      "type": "string",
-      "description": "A CSS selector stating which links on the page (<code>&lt;a&gt;</code> elements with <code>href</code> attribute) shall be followed and added to the request queue. To filter the links added to the queue, use the <b>Link patterns</b> field.<br><br>If the <b>Link selector</b> is empty, the page links are ignored. Of course, you can work with the page links and the request queue in the <b>Page function</b> as well.",
-      "editor": "textfield",
-      "prefill": "a[href]"
-    },
-    "linkPatterns": {
-      "title": "Link patterns",
-      "type": "array",
-      "description": "Link patterns (regular expressions) to match links in the page that you want to enqueue. Combine with <b>Link selector</b> to tell the scraper where to find links. Omitting the link patterns will cause the scraper to enqueue all links matched by the Link selector.",
-      "editor": "stringList",
-      "prefill": [".*crawlee\\.dev.*"]
     },
     "camoufoxPlugin": {
       "title": "Camoufox Plugin",

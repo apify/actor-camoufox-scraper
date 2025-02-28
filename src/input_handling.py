@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import re
 from datetime import timedelta
-from re import Pattern
 from typing import Sequence, cast
 
-from crawlee import Glob
 from camoufox import AsyncNewBrowser
 from crawlee.browsers import PlaywrightBrowserPlugin, PlaywrightBrowserController
 from pydantic import BaseModel, ConfigDict, Field
@@ -22,11 +19,7 @@ class ActorInputData(BaseModel):
 
     camoufox_plugin_class: type[PlaywrightBrowserPlugin]
     start_urls: Sequence[str]
-    link_selector: str = ""
-    link_patterns: list[Pattern | Glob] = []
-    max_requests_per_crawl: int = Field(1, ge=1)
-    max_depth: int = Field(0, ge=0)
-    sleep_time_before_screenshot: int = Field(0, ge=0)
+    sleep_time_before_challenge: int = Field(0, ge=0)
     request_timeout: timedelta = Field(timedelta(seconds=30), gt=timedelta(seconds=0))
     proxy_configuration: ProxyConfiguration
 
@@ -50,14 +43,8 @@ class ActorInputData(BaseModel):
         ) is not None:
             aid = cls(
                 start_urls=[start_url["url"] for start_url in start_urls],
-                link_selector=actor_input.get("linkSelector", ""),
-                link_patterns=[
-                    re.compile(pattern)
-                    for pattern in actor_input.get("linkPatterns", [".*"])
-                ],  # default matches everything
-                max_depth=actor_input.get("maxCrawlingDepth", 1),
-                sleep_time_before_screenshot=actor_input.get(
-                    "sleep_time_before_screenshot", 10
+                sleep_time_before_challenge=actor_input.get(
+                    "sleepTimeBeforeChallenge", 10
                 ),
                 max_requests_per_crawl=actor_input.get("maxRequestsPerCrawl", 5),
                 request_timeout=timedelta(
