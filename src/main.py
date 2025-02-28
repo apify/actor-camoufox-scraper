@@ -12,13 +12,15 @@ from crawlee.crawlers import PlaywrightCrawler, PlaywrightCrawlingContext
 from crawlee.storages import RequestQueue
 
 from src.camoufox_fetcher import VersionSpecificCamoufoxFetcher
+from src.handler_helpers import is_cloudflare, get_challenge_bounding_box
 from src.input_handling import ActorInputData
 
 
 @dataclasses.dataclass
 class BlockedInfo:
-    blocked_without_click_count: int = 0
-    blocked_after_click_count: int = 0
+    blocked_initially: int = 0
+    blocked_after_challenge_click: int = 0
+    blocked_without_challenge: int = 0
     can_get_through: int = 0
     failed_request: int = 0
 
@@ -33,7 +35,8 @@ async def main() -> None:
         releases = fetcher.fetch_latest_releases(3)
         attempts_per_release = 5
 
-        result_dataset = await Actor.open_dataset(name="CamoufoxTester")
+        error_dataset = await Actor.open_dataset()
+        error_kvs = await Actor.open_key_value_store()
 
         # Start one crawler for each release
         for release in releases:
@@ -75,34 +78,36 @@ async def main() -> None:
                             context.log.info(f"Waiting for: {context.request.url} ...")
                             await asyncio.sleep(aid.sleep_time_before_challenge)
 
-                            if await context.page.get_by_text(
-                                "Cloudflare"
-                            ).first.all_inner_texts():
+                            if await is_cloudflare(context.page):
                                 blocked_summary[
                                     context.request.url
-                                ].blocked_without_click_count += 1
+                                ].blocked_initially += 1
+                                if bounding_dox := await get_challenge_bounding_box(
+                                    context.page
+                                ):
+                                    context.log.info(
+                                        f"Blocked. Try to click on challenge: {context.request.url} ..."
+                                    )
+                                    await context.page.mouse.click(
+                                        bounding_dox["x"] + 30, bounding_dox["y"] + 30
+                                    )
+                                    await asyncio.sleep(10)
 
-                                context.log.info(
-                                    f"Blocked. Try to click on challenge: {context.request.url} ..."
-                                )
-                                bounding_dox = await context.page.locator(
-                                    "css=.main-content div"
-                                ).first.bounding_box()
-                                await context.page.mouse.click(
-                                    bounding_dox["x"] + 30, bounding_dox["y"] + 30
-                                )
-
-                                await asyncio.sleep(10)
-
-                                if await context.page.get_by_text(
-                                    "Cloudflare"
-                                ).first.all_inner_texts():
+                                    if await is_cloudflare(context.page):
+                                        blocked_summary[
+                                            context.request.url
+                                        ].blocked_after_challenge_click += 1
+                                        context.log.info(
+                                            f"Blocked after clicking on challenge: {context.request.url} ..."
+                                        )
+                                        return
+                                else:
+                                    context.log.info(
+                                        f"Blocked without challenge: {context.request.url} ..."
+                                    )
                                     blocked_summary[
                                         context.request.url
-                                    ].blocked_after_click_count += 1
-                                    context.log.info(
-                                        f"Blocked after clicking on challenge: {context.request.url} ..."
-                                    )
+                                    ].blocked_without_challenge += 1
                                     return
 
                             context.log.info(
@@ -120,11 +125,10 @@ async def main() -> None:
                                 "content": await context.page.content(),
                             }
                             # Errors go to unnamed default storages. No need to track them for long time.
-                            await context.push_data(data=data)
+                            await error_dataset.push_data(data)
                             context.log.info(f"Exception in handler (saved page)")
                             image = await context.page.screenshot(full_page=True)
-                            kvs = await context.get_key_value_store()
-                            await kvs.set_value(
+                            await error_kvs.set_value(
                                 slugify(
                                     f"{context.request.url}_{version_text}_{attempt}"
                                 ),
@@ -140,16 +144,20 @@ async def main() -> None:
                     await rq.drop()
 
             for page, blocked_info in blocked_summary.items():
+                result_dataset = await Actor.open_dataset(
+                    name=f"CamoufoxTester-{slugify(page)}"
+                )
                 await result_dataset.push_data(
                     {
                         "date:": datetime.now().date().isoformat(),
-                        "Camoufox binary": version_text,
-                        "page:": page,
+                        "Camoufox version:": version_text,
                         "blocked_without_click [%]": 100
-                        * blocked_info.blocked_without_click_count
+                        * blocked_info.blocked_initially
                         / attempts_per_release,
                         "blocked_after_click [%]": 100
-                        * blocked_info.blocked_after_click_count
+                        * blocked_info.blocked_after_challenge_click,
+                        "blocked_without_challenge [%]": 100
+                        * blocked_info.blocked_without_challenge
                         / attempts_per_release,
                         "can_get_through [%]": 100
                         * blocked_info.can_get_through

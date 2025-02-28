@@ -19,6 +19,6 @@ class VersionSpecificCamoufoxFetcher(CamoufoxFetcher):
             for asset in release["assets"]:
                 if data := self.check_asset(asset):
                     latest_releases.append(data)
-                    if len(latest_releases) >= n - 1:
-                        break
+                    if len(latest_releases) >= n:
+                        return latest_releases
         return latest_releases
