@@ -111,7 +111,7 @@ async def main() -> None:
                             blocked_summary[context.request.url].can_get_through += 1
                         except Exception as e:
                             context.log.info(
-                                f"Exception in handler. Try to get screenshot of the page"
+                                f"Exception in handler: {context.request.url}"
                             )
                             data = {
                                 "page:": context.request.url,
@@ -121,6 +121,7 @@ async def main() -> None:
                             }
                             # Errors go to unnamed default storages. No need to track them for long time.
                             await context.push_data(data=data)
+                            context.log.info(f"Exception in handler (saved page)")
                             image = await context.page.screenshot(full_page=True)
                             kvs = await context.get_key_value_store()
                             await kvs.set_value(
@@ -130,6 +131,7 @@ async def main() -> None:
                                 image,
                                 content_type="image/png",
                             )
+                            context.log.info(f"Exception in handler (saved screenshot)")
                             raise
 
                     await crawler.run(aid.start_urls)
