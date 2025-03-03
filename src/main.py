@@ -155,7 +155,8 @@ async def main() -> None:
                         * blocked_info.blocked_initially
                         / attempts_per_release,
                         "blocked_after_click [%]": 100
-                        * blocked_info.blocked_after_challenge_click,
+                        * blocked_info.blocked_after_challenge_click
+                        / attempts_per_release,
                         "blocked_without_challenge [%]": 100
                         * blocked_info.blocked_without_challenge
                         / attempts_per_release,
