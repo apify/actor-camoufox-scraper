@@ -1,3 +1,6 @@
+import camoufox.pkgman as _pkgman
+_pkgman.VERSION_MIN = _pkgman.Version(release='alpha.0')
+
 from camoufox.pkgman import CamoufoxFetcher, Version
 import requests
 
